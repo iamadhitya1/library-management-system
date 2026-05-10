@@ -1,0 +1,14 @@
+# Compiled Java bytecode
+*.class
+*.jar
+
+# IDE
+.vscode/
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# OS
+.DS_Store
+Thumbs.db
