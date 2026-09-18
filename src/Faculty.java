@@ -13,6 +13,14 @@ class Faculty extends User {
         this.department = department;
     }
 
+    /** Package-private restore constructor: used when reloading saved state. */
+    Faculty(String id, String name, String email, String phone,
+            String facultyId, String department, double fineAmount) {
+        super(id, name, email, phone, fineAmount);
+        this.facultyId  = facultyId;
+        this.department = department;
+    }
+
     public String getFacultyId()  { return facultyId; }
     public String getDepartment() { return department; }
 

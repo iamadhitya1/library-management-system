@@ -15,9 +15,12 @@ public class Main {
 
     static LibrarySystem library = new LibrarySystem();
     static Scanner       scanner = new Scanner(System.in);
+    static final String  SAVE_FILE = "library_data.json";
 
     public static void main(String[] args) {
-        seedDemoData();
+        boolean loaded = loadSavedState();
+        if (!loaded) seedDemoData();
+
         System.out.println("\n╔══════════════════════════════════════════╗");
         System.out.println("║      LIBRARY MANAGEMENT SYSTEM v2.0     ║");
         System.out.println("║      IITRAM Ahmedabad — OOP Project      ║");
@@ -36,11 +39,37 @@ public class Main {
                 case 5  -> handleSearch();
                 case 6  -> handleReports();
                 case 7  -> handleFines();
-                case 0  -> { running = false; System.out.println("Goodbye!"); }
+                case 0  -> { running = false; saveState(); System.out.println("Goodbye!"); }
                 default -> System.out.println("⚠ Invalid choice. Try again.");
             }
         }
         scanner.close();
+    }
+
+    // ══════════════════════════════════════════════════════
+    // PERSISTENCE — load on startup, save on exit
+    // ══════════════════════════════════════════════════════
+
+    /** Returns true if an existing save file was found and loaded. */
+    static boolean loadSavedState() {
+        try {
+            library.loadFromFile(SAVE_FILE);
+            boolean hasData = !library.getAllUsers().isEmpty() || !library.getAllResources().isEmpty();
+            if (hasData) System.out.println("\n✔ Loaded saved library data from " + SAVE_FILE);
+            return hasData;
+        } catch (Exception e) {
+            System.out.println("⚠ Could not load saved data (" + e.getMessage() + "). Starting fresh.");
+            return false;
+        }
+    }
+
+    static void saveState() {
+        try {
+            library.saveToFile(SAVE_FILE);
+            System.out.println("✔ Library data saved to " + SAVE_FILE);
+        } catch (Exception e) {
+            System.out.println("⚠ Could not save library data: " + e.getMessage());
+        }
     }
 
     // ══════════════════════════════════════════════════════

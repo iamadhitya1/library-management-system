@@ -1,5 +1,8 @@
 import java.util.*;
 import java.util.stream.*;
+import java.io.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 /**
  * Core library system engine.
@@ -211,5 +214,132 @@ class LibrarySystem {
             .filter(r -> r.getId().equalsIgnoreCase(id))
             .findFirst()
             .orElseThrow(() -> new Exception("Borrow record not found: " + id));
+    }
+
+    // ══════════════════════════════════════════════════════
+    // PERSISTENCE (save / load to a JSON file)
+    // ══════════════════════════════════════════════════════
+
+    /**
+     * Writes the entire library state (users, resources, borrow records) to a JSON file.
+     * Objects are converted to the "Data" DTOs first (see PersistenceData.java) so that
+     * User <-> BorrowRecord circular references never reach Gson.
+     */
+    public void saveToFile(String path) throws IOException {
+        LibraryData data = new LibraryData();
+
+        for (User u : users) {
+            UserData ud = new UserData();
+            ud.id = u.getId();
+            ud.name = u.getName();
+            ud.email = u.getEmail();
+            ud.phone = u.getPhone();
+            ud.fineAmount = u.getFineAmount();
+            if (u instanceof Student s) {
+                ud.type = "STUDENT";
+                ud.studentId = s.getStudentId();
+                ud.department = s.getDepartment();
+            } else if (u instanceof Faculty f) {
+                ud.type = "FACULTY";
+                ud.facultyId = f.getFacultyId();
+                ud.department = f.getDepartment();
+            }
+            data.users.add(ud);
+        }
+
+        for (LibraryResource r : resources) {
+            ResourceData rd = new ResourceData();
+            rd.id = r.getId();
+            rd.title = r.getTitle();
+            rd.author = r.getAuthor();
+            rd.isbn = r.getIsbn();
+            rd.location = r.getLocation();
+            rd.available = r.isAvailable();
+            if (r instanceof PhysicalBook pb) {
+                rd.type = "PHYSICAL";
+                rd.pageCount = pb.getPageCount();
+                rd.publisher = pb.getPublisher();
+                rd.edition = pb.getEdition();
+            } else if (r instanceof EBook e) {
+                rd.type = "EBOOK";
+                rd.fileFormat = e.getFileFormat();
+                rd.fileSizeMB = e.getFileSizeMB();
+                rd.downloadUrl = e.getDownloadUrl();
+            }
+            data.resources.add(rd);
+        }
+
+        for (BorrowRecord br : borrowRecords) {
+            BorrowRecordData bd = new BorrowRecordData();
+            bd.id = br.getId();
+            bd.userId = br.getUser().getId();
+            bd.resourceId = br.getResource().getId();
+            bd.borrowDate = br.getBorrowDate().getTime();
+            bd.dueDate = br.getDueDate().getTime();
+            bd.returnDate = (br.getReturnDate() != null) ? br.getReturnDate().getTime() : -1L;
+            bd.fineAmount = br.getFineAmount();
+            bd.returned = br.isReturned();
+            data.borrowRecords.add(bd);
+        }
+
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        try (Writer writer = new FileWriter(path)) {
+            gson.toJson(data, writer);
+        }
+    }
+
+    /**
+     * Reads a previously saved JSON file and rebuilds the entire library state from it.
+     * If the file doesn't exist yet (first run), this does nothing and leaves the
+     * library empty, so the caller can fall back to demo data.
+     */
+    public void loadFromFile(String path) throws IOException {
+        File file = new File(path);
+        if (!file.exists()) return;
+
+        Gson gson = new Gson();
+        LibraryData data;
+        try (Reader reader = new FileReader(file)) {
+            data = gson.fromJson(reader, LibraryData.class);
+        }
+        if (data == null) return;
+
+        users.clear();
+        resources.clear();
+        borrowRecords.clear();
+
+        Map<String, User> userById = new HashMap<>();
+        for (UserData ud : data.users) {
+            User u = "STUDENT".equals(ud.type)
+                ? new Student(ud.id, ud.name, ud.email, ud.phone, ud.studentId, ud.department, ud.fineAmount)
+                : new Faculty(ud.id, ud.name, ud.email, ud.phone, ud.facultyId, ud.department, ud.fineAmount);
+            users.add(u);
+            userById.put(u.getId(), u);
+        }
+
+        Map<String, LibraryResource> resourceById = new HashMap<>();
+        for (ResourceData rd : data.resources) {
+            LibraryResource r = "PHYSICAL".equals(rd.type)
+                ? new PhysicalBook(rd.id, rd.title, rd.author, rd.isbn, rd.location, rd.available,
+                                    rd.pageCount, rd.publisher, rd.edition)
+                : new EBook(rd.id, rd.title, rd.author, rd.isbn, rd.location, rd.available,
+                                    rd.fileFormat, rd.fileSizeMB, rd.downloadUrl);
+            resources.add(r);
+            resourceById.put(r.getId(), r);
+        }
+
+        for (BorrowRecordData bd : data.borrowRecords) {
+            User user = userById.get(bd.userId);
+            LibraryResource resource = resourceById.get(bd.resourceId);
+            if (user == null || resource == null) continue; // skip orphaned records defensively
+
+            Date returnDate = (bd.returnDate == -1L) ? null : new Date(bd.returnDate);
+            BorrowRecord record = new BorrowRecord(bd.id, user, resource,
+                new Date(bd.borrowDate), new Date(bd.dueDate),
+                returnDate, bd.fineAmount, bd.returned);
+
+            borrowRecords.add(record);
+            user.addBorrowRecord(record);
+        }
     }
 }

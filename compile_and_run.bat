@@ -1,7 +1,7 @@
 @echo off
 echo Compiling Library Management System...
 cd src
-javac *.java
+javac -cp ".;../lib/gson-2.10.1.jar" -d . *.java
 if %errorlevel% neq 0 (
     echo Compilation failed.
     pause
@@ -9,5 +9,5 @@ if %errorlevel% neq 0 (
 )
 echo Compilation successful. Starting application...
 echo.
-java Main
+java -cp ".;../lib/gson-2.10.1.jar" Main
 pause

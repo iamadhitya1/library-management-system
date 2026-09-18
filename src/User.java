@@ -13,12 +13,18 @@ abstract class User {
     private double fineAmount;
 
     public User(String name, String email, String phone) {
-        this.id            = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        this(UUID.randomUUID().toString().substring(0, 8).toUpperCase(), name, email, phone, 0.0);
+    }
+
+    /** Package-private restore constructor: used when reloading saved state, where the
+     *  original id and fine amount must be preserved instead of generated fresh. */
+    User(String id, String name, String email, String phone, double fineAmount) {
+        this.id            = id;
         this.name          = name;
         this.email         = email;
         this.phone         = phone;
         this.borrowHistory = new ArrayList<>();
-        this.fineAmount    = 0.0;
+        this.fineAmount    = fineAmount;
     }
 
     // ── Getters ──────────────────────────────────────────

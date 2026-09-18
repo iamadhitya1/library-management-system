@@ -15,6 +15,15 @@ class PhysicalBook extends LibraryResource {
         this.edition   = edition;
     }
 
+    /** Package-private restore constructor: used when reloading saved state. */
+    PhysicalBook(String id, String title, String author, String isbn, String location,
+                 boolean available, int pageCount, String publisher, int edition) {
+        super(id, title, author, isbn, location, available);
+        this.pageCount = pageCount;
+        this.publisher = publisher;
+        this.edition   = edition;
+    }
+
     public int    getPageCount() { return pageCount; }
     public String getPublisher() { return publisher; }
     public int    getEdition()   { return edition; }

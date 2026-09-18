@@ -15,6 +15,15 @@ class EBook extends LibraryResource {
         this.downloadUrl = downloadUrl;
     }
 
+    /** Package-private restore constructor: used when reloading saved state. */
+    EBook(String id, String title, String author, String isbn, String location, boolean available,
+          String fileFormat, double fileSizeMB, String downloadUrl) {
+        super(id, title, author, isbn, location, available);
+        this.fileFormat  = fileFormat;
+        this.fileSizeMB  = fileSizeMB;
+        this.downloadUrl = downloadUrl;
+    }
+
     public String getFileFormat()   { return fileFormat; }
     public double getFileSizeMB()   { return fileSizeMB; }
     public String getDownloadUrl()  { return downloadUrl; }

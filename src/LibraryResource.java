@@ -13,12 +13,18 @@ abstract class LibraryResource {
     private boolean isAvailable;
 
     public LibraryResource(String title, String author, String isbn, String location) {
-        this.id          = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        this(UUID.randomUUID().toString().substring(0, 8).toUpperCase(), title, author, isbn, location, true);
+    }
+
+    /** Package-private restore constructor: used when reloading saved state, where the
+     *  original id and availability must be preserved instead of generated fresh. */
+    LibraryResource(String id, String title, String author, String isbn, String location, boolean isAvailable) {
+        this.id          = id;
         this.title       = title;
         this.author      = author;
         this.isbn        = isbn;
         this.location    = location;
-        this.isAvailable = true;
+        this.isAvailable = isAvailable;
     }
 
     // ── Getters ──────────────────────────────────────────

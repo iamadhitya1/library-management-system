@@ -25,6 +25,20 @@ class BorrowRecord {
         this.returned   = false;
     }
 
+    /** Package-private restore constructor: rebuilds a record exactly as it was saved,
+     *  instead of running returnResource()'s live fine calculation again. */
+    BorrowRecord(String id, User user, LibraryResource resource, Date borrowDate, Date dueDate,
+                 Date returnDate, double fineAmount, boolean returned) {
+        this.id         = id;
+        this.user       = user;
+        this.resource   = resource;
+        this.borrowDate = borrowDate;
+        this.dueDate    = dueDate;
+        this.returnDate = returnDate;
+        this.fineAmount = fineAmount;
+        this.returned   = returned;
+    }
+
     /**
      * Mark the resource as returned. Calculates fine if overdue.
      */
